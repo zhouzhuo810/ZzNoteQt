@@ -154,14 +154,14 @@ Window {
     Action {
         shortcut: "Ctrl+T"
         onTriggered: {
-            fontDialog.visible = true
+            fontSizeDialog.visible = true
         }
     }
 
     Action {
         shortcut: "Ctrl+Shift+T"
         onTriggered: {
-            fontSizeDialog.visible = true
+            fontDialog.visible = true
         }
     }
 

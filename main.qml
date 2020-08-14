@@ -220,8 +220,6 @@ Window {
         currentFont: textEdit.font
         title: qsTr("设置字体:"+settings.fa)
         onAccepted: {
-            textEdit.font.family =  currentFont.family
-            textEdit.font.pixelSize = currentFont.pixelSize
             settings.fontSize = currentFont.pixelSize
             settings.fontFamily = currentFont.family
         }

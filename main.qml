@@ -26,8 +26,8 @@ Window {
         property var noteId
         property var ip
         property bool isLoadOk
-        property int versionCode: 3
-        property string versionName: "1.0.2"
+        property int versionCode: 4
+        property string versionName: "1.0.3"
     }
 
     Timer {
@@ -37,6 +37,15 @@ Window {
         triggeredOnStart: true
         onTriggered: {
             heartBeat()
+        }
+    }
+
+    Timer {
+        id: getTimer
+        interval: 200
+        repeat: false
+        onTriggered: {
+            loadNote()
         }
     }
 
@@ -456,7 +465,7 @@ Window {
                 if (request.status === 200) {
                     //                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
-                    loadNote()
+                    getTimer.start()
                 }
                 else {
                     // This is very handy for finding out why your web service won't talk to you
@@ -712,7 +721,7 @@ Window {
                 if (request.status === 200) {
                     //                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
-                    loadNote()
+                    getTimer.start()
                 }
                 else {
                     // This is very handy for finding out why your web service won't talk to you
@@ -744,7 +753,7 @@ Window {
                 if (request.status === 200) {
                     //                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
-                    loadNote()
+                    getTimer.start()
                 }
                 else {
                     // This is very handy for finding out why your web service won't talk to you

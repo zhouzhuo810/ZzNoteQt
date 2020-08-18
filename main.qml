@@ -329,10 +329,13 @@ Window {
         visible: false
         x: window.width / 2 - width / 2
         y: window.height / 2 - height / 2
+        width: 260
         Label {
             id: msgLabel
             font.pixelSize: 16
-            lineHeight: 2
+            lineHeight: 1.5
+            width: 260
+            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         }
     }
 

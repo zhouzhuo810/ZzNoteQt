@@ -26,8 +26,8 @@ Window {
         property var noteId
         property var ip
         property bool isLoadOk
-        property int versionCode: 2
-        property string versionName: "1.0.1"
+        property int versionCode: 3
+        property string versionName: "1.0.2"
     }
 
     Timer {
@@ -583,6 +583,7 @@ Window {
         tvBottom.visible = visible
         logo.visible = visible
         btnCheckUpdate.visible = visible
+        btnShortcut.visible = visible
     }
 
     function checkUpdate(byHand) {

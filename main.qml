@@ -26,6 +26,8 @@ Window {
         property var noteId
         property var ip
         property bool isLoadOk
+        property int versionCode: 2
+        property string versionName: "1.0.1"
     }
 
     Timer {
@@ -73,7 +75,7 @@ Window {
         y: logo.y + logo.height + 40
         font.pixelSize: 14
         color: "#888888"
-        text: qsTr("V:1.0.0")
+        text: qsTr("V:"+attrs.versionName)
     }
 
 
@@ -128,6 +130,31 @@ Window {
             }
         }
 
+    }
+
+    RoundButton {
+        radius: 2
+        id: btnShortcut
+        width: 160
+        x: window.width / 2 - width / 2
+        y: window.height - height * 4.5
+        text: qsTr("快捷键说明")
+        onClicked: {
+            showShortcuts()
+        }
+    }
+
+
+    RoundButton {
+        radius: 2
+        width: 160
+        id: btnCheckUpdate
+        x: window.width / 2 - width / 2
+        y: window.height - height * 3
+        text: qsTr("检查更新")
+        onClicked: {
+            checkUpdate(true)
+        }
     }
 
     Action {
@@ -186,13 +213,28 @@ Window {
         }
     }
 
-
     Action {
         shortcut: "Ctrl+S"
         onTriggered: {
-            saveToTxt()
+            postToSaveNow()
         }
     }
+
+    Action {
+        shortcut: "Ctrl+Z"
+        onTriggered: {
+            postToUndo()
+        }
+    }
+
+
+    Action {
+        shortcut: "Ctrl+Shift+Z"
+        onTriggered: {
+            postToRedo()
+        }
+    }
+
 
     ColorDialog {
         id: colorDialog
@@ -224,6 +266,63 @@ Window {
             settings.fontFamily = currentFont.family
         }
     }
+
+    Dialog {
+        id: updateDialog
+        title: "发现新版"
+        visible: false
+        x: window.width / 2 - width / 2
+        y: window.height / 2 - height / 2
+        Column {
+            Label {
+                font.pixelSize: 16
+                lineHeight: 2
+                text: "现在去官网下载新版吗？"
+            }
+            Row {
+                leftPadding: 0
+                rightPadding: 0
+
+                RoundButton {
+                    radius: 2
+                    width: 80
+                    text: "取消"
+                    onClicked: {
+                        updateDialog.visible = false
+                    }
+                }
+
+                Label {
+                    width: 20
+                }
+
+                RoundButton {
+                    id: msgOkBtn
+                    radius: 2
+                    width: 80
+                    text: "确定"
+                    onClicked: {
+                        updateDialog.visible = false
+                        jumpToWeb("https://www.zznote.top/AndCode/")
+                    }
+                }
+            }
+        }
+
+    }
+
+    Dialog {
+        id: msgDialog
+        visible: false
+        x: window.width / 2 - width / 2
+        y: window.height / 2 - height / 2
+        Label {
+            id: msgLabel
+            font.pixelSize: 16
+            lineHeight: 2
+        }
+    }
+
 
 
     Dialog {
@@ -310,6 +409,21 @@ Window {
 
     }
 
+
+    function showMsg(title, msg) {
+        msgDialog.title = title
+        msgLabel.text = msg
+        msgDialog.visible = true
+    }
+
+    function showShortcuts() {
+        showMsg("快捷键说明","Ctrl+S:保存\nCtrl+T:字体大小\nCtrl+O:文字颜色\nCtrl+P:内边距\nCtrl+Z:撤回\nCtrl+Shift+T:修改字体\nCtrl+Shift+F:格式化\nCtrl+Shift+Z:反撤回")
+    }
+
+    function jumpToWeb(url) {
+        Qt.openUrlExternally(url)
+    }
+
     function saveToTxt() {
 
     }
@@ -367,6 +481,7 @@ Window {
         attrs.ip = ip
         if(!countDown.running) {
             countDown.start()
+            checkUpdate(false)
         }
     }
 
@@ -447,6 +562,7 @@ Window {
                     // This is very handy for finding out why your web service won't talk to you
 //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
                     showIpInputView(true)
+                    attrs.isLoadOk = false
                     textEdit.text = "请长按便签APP的扫码按钮启动服务"
                 }
             }
@@ -466,6 +582,45 @@ Window {
         tvVersion.visible = visible
         tvBottom.visible = visible
         logo.visible = visible
+        btnCheckUpdate.visible = visible
+    }
+
+    function checkUpdate(byHand) {
+        var request = new XMLHttpRequest();
+        request.onreadystatechange=function() {
+            // Need to wait for the DONE state or you'll get errors
+            if(request.readyState === XMLHttpRequest.DONE) {
+//                justPrint("request.status="+request.status)
+//                justPrint("request.responseText="+request.responseText)
+                if (request.status === 200) {
+//                    console.log("Response = " + request.responseText);
+                    // if response is JSON you can parse it
+                    var response = JSON.parse(request.responseText);
+                    var code = response.code
+                    var msg = response.msg
+                    if(code === 1) {
+                        var note = response.data.upgradeNote
+                        updateDialog.informativeText = note
+                        updateDialog.visible = true
+                    } else {
+                        if(byHand) {
+                            showMsg("检查更新", msg)
+                        }
+                    }
+
+                } else {
+                    if(byHand) {
+                        showMsg("检查更新","网络异常，请检查网络是否畅通～")
+                    }
+                }
+            }
+        }
+
+        // This is for a POST request but GET etc. work fine too
+        request.open("GET", "https://zznote.top/AndCode/v1/upgrade/checkUpdate?"+"appType=ZzNotePC&byHand="+byHand+"&versionCode="+attrs.versionCode, true); // only async supported
+        // Post types other than forms should work fine too but I've not tried
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        request.send()
     }
 
 
@@ -496,8 +651,8 @@ Window {
                     showIpInputView(true)
                     // This is very handy for finding out why your web service won't talk to you
 //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
-                    textEdit.text = "请长按便签APP的扫码按钮启动服务"
                     attrs.isLoadOk = false
+                    textEdit.text = "请长按便签APP的扫码按钮启动服务"
                 }
             }
         }
@@ -539,6 +694,101 @@ Window {
         var requestString = "noteId=" + attrs.noteId +"&start="+start+"&end="+end;
         request.send(requestString);
     }
+
+    function postToUndo() {
+        if(attrs.noteId === 0) {
+            return
+        }
+
+        var request = new XMLHttpRequest();
+        request.onreadystatechange=function() {
+            // Need to wait for the DONE state or you'll get errors
+            if(request.readyState === XMLHttpRequest.DONE) {
+                if (request.status === 200) {
+                    //                    console.log("Response = " + request.responseText);
+                    // if response is JSON you can parse it
+                    loadNote()
+                }
+                else {
+                    // This is very handy for finding out why your web service won't talk to you
+                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
+                }
+            }
+        }
+        // Make sure whatever you post is URI encoded
+        //        var encodedString = encodeURIComponent(postString);
+        // This is for a POST request but GET etc. work fine too
+        request.open("POST", "http://"+attrs.ip+":8080/desktop/undo/", true); // only async supported
+        // Post types other than forms should work fine too but I've not tried
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        // Form data is web service dependent - check parameter format
+        var requestString = "noteId=" + attrs.noteId;
+        request.send(requestString);
+    }
+
+
+    function postToRedo() {
+        if(attrs.noteId === 0) {
+            return
+        }
+
+        var request = new XMLHttpRequest();
+        request.onreadystatechange=function() {
+            // Need to wait for the DONE state or you'll get errors
+            if(request.readyState === XMLHttpRequest.DONE) {
+                if (request.status === 200) {
+                    //                    console.log("Response = " + request.responseText);
+                    // if response is JSON you can parse it
+                    loadNote()
+                }
+                else {
+                    // This is very handy for finding out why your web service won't talk to you
+                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
+                }
+            }
+        }
+        // Make sure whatever you post is URI encoded
+        //        var encodedString = encodeURIComponent(postString);
+        // This is for a POST request but GET etc. work fine too
+        request.open("POST", "http://"+attrs.ip+":8080/desktop/redo/", true); // only async supported
+        // Post types other than forms should work fine too but I've not tried
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        // Form data is web service dependent - check parameter format
+        var requestString = "noteId=" + attrs.noteId;
+        request.send(requestString);
+    }
+
+    function postToSaveNow() {
+        if(attrs.noteId === 0) {
+            return
+        }
+
+        var request = new XMLHttpRequest();
+        request.onreadystatechange=function() {
+            // Need to wait for the DONE state or you'll get errors
+            if(request.readyState === XMLHttpRequest.DONE) {
+                if (request.status === 200) {
+                    //                    console.log("Response = " + request.responseText);
+                    // if response is JSON you can parse it
+                }
+                else {
+                    // This is very handy for finding out why your web service won't talk to you
+                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
+                }
+            }
+        }
+        // Make sure whatever you post is URI encoded
+        //        var encodedString = encodeURIComponent(postString);
+        // This is for a POST request but GET etc. work fine too
+        request.open("POST", "http://"+attrs.ip+":8080/desktop/saveNow/", true); // only async supported
+        // Post types other than forms should work fine too but I've not tried
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        // Form data is web service dependent - check parameter format
+        var requestString = "noteId=" + attrs.noteId;
+        request.send(requestString);
+    }
+
+
 
 
 }

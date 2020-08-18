@@ -26,7 +26,7 @@ Window {
         property var noteId
         property var ip
         property bool isLoadOk
-        property int versionCode: 2
+        property int versionCode: 3
         property string versionName: "1.0.2"
     }
 

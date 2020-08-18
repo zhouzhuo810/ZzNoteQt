@@ -26,7 +26,7 @@ Window {
         property var noteId
         property var ip
         property bool isLoadOk
-        property int versionCode: 3
+        property int versionCode: 2
         property string versionName: "1.0.2"
     }
 
@@ -275,8 +275,12 @@ Window {
         y: window.height / 2 - height / 2
         Column {
             Label {
+                id: updateLabel
                 font.pixelSize: 16
-                lineHeight: 2
+                width: 220
+                bottomPadding: 20
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                lineHeight: 1.1
                 text: "现在去官网下载新版吗？"
             }
             Row {
@@ -285,7 +289,7 @@ Window {
 
                 RoundButton {
                     radius: 2
-                    width: 80
+                    width: 100
                     text: "取消"
                     onClicked: {
                         updateDialog.visible = false
@@ -299,7 +303,7 @@ Window {
                 RoundButton {
                     id: msgOkBtn
                     radius: 2
-                    width: 80
+                    width: 100
                     text: "确定"
                     onClicked: {
                         updateDialog.visible = false
@@ -601,7 +605,7 @@ Window {
                     var msg = response.msg
                     if(code === 1) {
                         var note = response.data.upgradeNote
-                        updateDialog.informativeText = note
+                        updateLabel.text = note
                         updateDialog.visible = true
                     } else {
                         if(byHand) {

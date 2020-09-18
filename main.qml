@@ -26,8 +26,8 @@ Window {
         property var noteId
         property var ip
         property bool isLoadOk
-        property int versionCode: 4
-        property string versionName: "1.0.3"
+        property int versionCode: 5
+        property string versionName: "1.0.4"
     }
 
     Timer {
@@ -383,7 +383,6 @@ Window {
         visible: false
         width: window.width
         height: window.height
-        contentWidth: 16
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         FontLoader {
@@ -399,7 +398,6 @@ Window {
                 }
             }
         }
-
 
         TextEdit {
             id: textEdit
@@ -420,7 +418,6 @@ Window {
             onTextChanged: {
                 justUpdateContent(getText(0, length))
             }
-
         }
 
     }
@@ -549,7 +546,7 @@ Window {
 
 
     function httpForLoadNote() {
-//        justPrint("attrs.noteId =" + attrs.noteId)
+        //        justPrint("attrs.noteId =" + attrs.noteId)
         if(attrs.noteId === 0) {
             return
         }
@@ -560,7 +557,7 @@ Window {
             // Need to wait for the DONE state or you'll get errors
             if(request.readyState === XMLHttpRequest.DONE) {
                 if (request.status === 200) {
-//                    console.log("Response = " + request.responseText);
+                    //                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
                     var response = JSON.parse(request.responseText);
                     var code = response.code
@@ -576,7 +573,7 @@ Window {
                     }
                 } else {
                     // This is very handy for finding out why your web service won't talk to you
-//                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
+                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
                     showIpInputView(true)
                     attrs.isLoadOk = false
                     textEdit.text = "请长按便签APP的扫码按钮启动服务"
@@ -607,10 +604,10 @@ Window {
         request.onreadystatechange=function() {
             // Need to wait for the DONE state or you'll get errors
             if(request.readyState === XMLHttpRequest.DONE) {
-//                justPrint("request.status="+request.status)
-//                justPrint("request.responseText="+request.responseText)
+                //                justPrint("request.status="+request.status)
+                //                justPrint("request.responseText="+request.responseText)
                 if (request.status === 200) {
-//                    console.log("Response = " + request.responseText);
+                    //                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
                     var response = JSON.parse(request.responseText);
                     var code = response.code
@@ -648,7 +645,7 @@ Window {
             // Need to wait for the DONE state or you'll get errors
             if(request.readyState === XMLHttpRequest.DONE) {
                 if (request.status === 200) {
-//                    console.log("Response = " + request.responseText);
+                    //                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
                     var response = JSON.parse(request.responseText);
                     var noteId = response.editingNoteId
@@ -665,10 +662,11 @@ Window {
                         loadNote()
                     }
                 } else {
+                    attrs.noteId = 0
+                    attrs.isLoadOk = false
                     showIpInputView(true)
                     // This is very handy for finding out why your web service won't talk to you
-//                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
-                    attrs.isLoadOk = false
+                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
                     textEdit.text = "请长按便签APP的扫码按钮启动服务"
                 }
             }

@@ -880,6 +880,10 @@ Window {
             return
         }
 
+        if(attrs.inStack.length == 0) {
+            return
+        }
+
         var text = attrs.inStack.pop
         textEdit.text = text
         addToOutStack(text)
@@ -890,6 +894,11 @@ Window {
         if(attrs.noteId === 0) {
             return
         }
+
+        if(attrs.outStack.length == 0) {
+            return
+        }
+
         var text = attrs.outStack.pop
         textEdit.text = text
     }

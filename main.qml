@@ -28,6 +28,8 @@ Window {
         property bool isLoadOk
         property int versionCode: 5
         property string versionName: "1.0.4"
+        property var inStack: []
+        property var outStack: []
     }
 
     Timer {
@@ -195,6 +197,66 @@ Window {
     }
 
     Action {
+        shortcut: "Shift+Tab"
+        onTriggered: {
+            justPrint("shift + Tab")
+            if(attrs.noteId === 0) {
+                return
+            }
+            var text = textEdit.text
+            var start = textEdit.selectionStart
+            var end = textEdit.selectionEnd
+            var reg = new RegExp( '/\t+/' , "g")
+            var reg2 = new RegExp('　', "g")
+            var contentY = flickView.contentY
+            if (start === end) {
+                textEdit.text = text.replace(reg, '').replace(reg2, "")
+                textEdit.select(start, start)
+                flickView.contentY = contentY
+            } else {
+                var selectionText = textEdit.selectedText
+                var midStr = selectionText.replace(reg, '').replace(reg2, "")
+                var befStr = text.substring(0, start)
+                var endStr = text.substring(end, text.length)
+                var fullStr = befStr + midStr + endStr
+                textEdit.text = fullStr
+                textEdit.select(start, start)
+                flickView.contentY = contentY
+            }
+        }
+    }
+
+    Action {
+        shortcut: "Ctrl+Shift+L"
+        onTriggered: {
+            justPrint("shift + Shift + L")
+            if(attrs.noteId === 0) {
+                return
+            }
+            var text = textEdit.text
+            var start = textEdit.selectionStart
+            var end = textEdit.selectionEnd
+            var reg = /\n(\n)*( )*(\n)*\n/g
+            var contentY = flickView.contentY
+            if (start === end) {
+                textEdit.text = text.replace(reg, '\n')
+                textEdit.select(start, start)
+                flickView.contentY = contentY
+            } else {
+                var selectionText = textEdit.selectedText
+                var midStr = selectionText.replace(reg, '\n')
+                var befStr = text.substring(0, start)
+                var endStr = text.substring(end, text.length)
+                var fullStr = befStr + midStr + endStr
+                textEdit.text = fullStr
+                textEdit.select(start, start)
+                flickView.contentY = contentY
+            }
+        }
+    }
+
+
+    Action {
         shortcut: "Ctrl+Shift+T"
         onTriggered: {
             fontDialog.visible = true
@@ -329,12 +391,12 @@ Window {
         visible: false
         x: window.width / 2 - width / 2
         y: window.height / 2 - height / 2
-        width: 260
+        width: 280
         Label {
             id: msgLabel
             font.pixelSize: 16
             lineHeight: 1.5
-            width: 260
+            width: 280
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         }
     }
@@ -380,48 +442,74 @@ Window {
         id: scrollView
         x: 0
         y: 0
-        visible: false
+        visible:  false
         width: window.width
         height: window.height
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+        ScrollBar.vertical.interactive: true
 
-        FontLoader {
-            id: myFont;
-            source: ipInput.text.length == 0 ? null : "http://"+ipInput.text+":8080/desktop/fonts"
-            onStatusChanged: {
-                if (status === FontLoader.Ready) {
-                    if(settings.fontFamily.length > 0) {
-                        textEdit.font.family = settings.fontFamily
-                    } else {
-                        textEdit.font.family = name
+
+        Flickable {
+            id: flickView
+            x: 0
+            y: 0
+            width: window.width
+            height: window.height
+            contentWidth: textEdit.paintedWidth
+            contentHeight: textEdit.paintedHeight
+
+            FontLoader {
+                id: myFont;
+                source: ipInput.text.length == 0 ? null : "http://"+ipInput.text+":8080/desktop/fonts"
+                onStatusChanged: {
+                    if (status === FontLoader.Ready) {
+                        if(settings.fontFamily.length > 0) {
+                            textEdit.font.family = settings.fontFamily
+                        } else {
+                            textEdit.font.family = name
+                        }
                     }
                 }
             }
-        }
 
-        TextEdit {
-            id: textEdit
-            x: 0
-            y: 0
-            width: scrollView.width
-            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            selectByMouse: true
-            cursorVisible: true
-            color: settings.color
-            textMargin: settings.padding
-            font.pixelSize: settings.fontSize
-            tabStopDistance: settings.fontSize * 2
-            font.family: settings.fontFamily
-            onSelectionStartChanged: {
-                postSelection(selectionStart, selectionEnd)
-            }
-            onTextChanged: {
-                justUpdateContent(getText(0, length))
-            }
-        }
 
+            function ensureVisible(r)
+            {
+                if (contentX >= r.x)
+                    contentX = r.x;
+                else if (contentX+width <= r.x+r.width)
+                    contentX = r.x+r.width-width;
+                if (contentY >= r.y)
+                    contentY = r.y;
+                else if (contentY+height <= r.y+r.height)
+                    contentY = r.y+r.height-height;
+            }
+
+            TextEdit {
+                id: textEdit
+                x: 0
+                y: 0
+                width: scrollView.width
+                wrapMode: TextEdit.Wrap
+                selectByMouse: true
+                cursorVisible: true
+                focus: true
+                color: settings.color
+                textMargin: settings.padding
+                font.pixelSize: settings.fontSize
+                tabStopDistance: settings.fontSize * 2
+                font.family: settings.fontFamily
+                onCursorRectangleChanged: flickView.ensureVisible(cursorRectangle)
+                onSelectionStartChanged: {
+                    postSelection(selectionStart, selectionEnd)
+                }
+                onTextChanged: {
+                    justUpdateContent(getText(0, length))
+                }
+            }
+
+        }
     }
-
 
     function showMsg(title, msg) {
         msgDialog.title = title
@@ -430,7 +518,7 @@ Window {
     }
 
     function showShortcuts() {
-        showMsg("快捷键说明","Ctrl+S:保存\nCtrl+T:字体大小\nCtrl+O:文字颜色\nCtrl+P:内边距\nCtrl+Z:撤回\nCtrl+Shift+T:修改字体\nCtrl+Shift+F:格式化\nCtrl+Shift+Z:反撤回")
+        showMsg("快捷键说明","Ctrl+S:保存\nCtrl+T:字体大小\nCtrl+O:文字颜色\nCtrl+P:内边距\nCtrl+Z:撤回\nCtrl+⬆️:聚焦到文首\nCtrl+⬇️:聚焦到文末\nCtrl+Shift+T:修改字体\nCtrl+Shift+F:段首缩进+插入空行\nCtrl+Shift+L:移除空行\nShift+Tab:移除段首缩进\nCtrl+Shift+Z:反撤回")
     }
 
     function jumpToWeb(url) {
@@ -442,15 +530,25 @@ Window {
     }
 
     function scrollToTop() {
-
+         flickView.contentY = 0
     }
 
     function scrollToBottom() {
-
+        flickView.contentY = flickView.contentHeight - flickView.height
     }
 
     function autoFormat() {
-        postAutoFormat()
+        var text = textEdit.text
+        var start = textEdit.selectionStart
+        var end = textEdit.selectionEnd
+        var reg = /\n(\n)*( )*(\n)*\n/g
+        var contentY = flickView.contentY
+
+        var reg1 = new RegExp( '/\t+/' , "g")
+        var reg2 = new RegExp('　', "g")
+        textEdit.text = "　　" + text.replace(reg1, '').replace(reg2, "").replace(reg, '\n').replace(/[\n\r]/g, '\n\n　　')
+        textEdit.select(start, start)
+        flickView.contentY = contentY
     }
 
     function postAutoFormat() {
@@ -512,7 +610,66 @@ Window {
         httpForLoadNote()
     }
 
+
+    function clearStack() {
+        attrs.inStack = []
+        attrs.outStack = []
+    }
+
+    function addToInStack(content) {
+        Array.prototype.remove=function(dx)
+        {
+            if(isNaN(dx)||dx>this.length){return false;}
+            for(var i=0,n=0;i<this.length;i++)
+            {
+                if(this[i]!==this[dx])
+                {
+                    this[n++]=this[i]
+                }
+            }
+            this.length-=1
+        }
+        if(content.length === 0) {
+            return
+        }
+
+        if(attrs.inStack.length < 50) {
+            attrs.inStack.push(content)
+        } else {
+            attrs.inStack.remove(0)
+            attrs.inStack.push(content)
+        }
+//        justPrint(attrs.inStack)
+    }
+
+    function addToOutStack(content) {
+        Array.prototype.remove=function(dx)
+        {
+            if(isNaN(dx)||dx>this.length){return false;}
+            for(var i=0,n=0;i<this.length;i++)
+            {
+                if(this[i]!==this[dx])
+                {
+                    this[n++]=this[i]
+                }
+            }
+            this.length-=1
+        }
+        if(content.length === 0) {
+            return
+        }
+
+        if(attrs.outStack.length < 50) {
+            attrs.outStack.push(content)
+        } else {
+            attrs.outStack.remove(0)
+            attrs.outStack.push(content)
+        }
+//        justPrint(attrs.inStack)
+    }
+
     function justUpdateContent(content) {
+        addToInStack(content)
         if(attrs.noteId === 0 || !attrs.isLoadOk) {
             return
         }
@@ -590,7 +747,9 @@ Window {
 
     function showIpInputView(visible) {
         scrollView.visible = !visible
-        ipLayout.visible = visible
+        ipLayout.visible = visible   
+        ipInput.focus = visible
+
         tvName.visible = visible
         tvVersion.visible = visible
         tvBottom.visible = visible
@@ -645,10 +804,11 @@ Window {
             // Need to wait for the DONE state or you'll get errors
             if(request.readyState === XMLHttpRequest.DONE) {
                 if (request.status === 200) {
-                    //                    console.log("Response = " + request.responseText);
+//                    console.log("Response = " + request.responseText);
                     // if response is JSON you can parse it
                     var response = JSON.parse(request.responseText);
                     var noteId = response.editingNoteId
+                    var charCount = response.editingCharCount
                     // then do something with it here
                     var changeNote = attrs.noteId !== noteId
                     attrs.noteId = noteId
@@ -657,9 +817,14 @@ Window {
                         attrs.isLoadOk = false
                         showIpInputView(false)
                     } else if(changeNote) {
+                        clearStack()
                         showIpInputView(false)
                         reloadIvBg()
                         loadNote()
+                    } else if (noteId !== 0 && charCount !== undefined && charCount !== "") {
+                        window.title = qsTr("小周便签 ( "+charCount+" 字)")
+                    } else {
+                        window.title = qsTr("小周便签")
                     }
                 } else {
                     attrs.noteId = 0
@@ -715,30 +880,9 @@ Window {
             return
         }
 
-        var request = new XMLHttpRequest();
-        request.onreadystatechange=function() {
-            // Need to wait for the DONE state or you'll get errors
-            if(request.readyState === XMLHttpRequest.DONE) {
-                if (request.status === 200) {
-                    //                    console.log("Response = " + request.responseText);
-                    // if response is JSON you can parse it
-                    getTimer.start()
-                }
-                else {
-                    // This is very handy for finding out why your web service won't talk to you
-                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
-                }
-            }
-        }
-        // Make sure whatever you post is URI encoded
-        //        var encodedString = encodeURIComponent(postString);
-        // This is for a POST request but GET etc. work fine too
-        request.open("POST", "http://"+attrs.ip+":8080/desktop/undo/", true); // only async supported
-        // Post types other than forms should work fine too but I've not tried
-        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        // Form data is web service dependent - check parameter format
-        var requestString = "noteId=" + attrs.noteId;
-        request.send(requestString);
+        var text = attrs.inStack.pop
+        textEdit.text = text
+        addToOutStack(text)
     }
 
 
@@ -746,31 +890,8 @@ Window {
         if(attrs.noteId === 0) {
             return
         }
-
-        var request = new XMLHttpRequest();
-        request.onreadystatechange=function() {
-            // Need to wait for the DONE state or you'll get errors
-            if(request.readyState === XMLHttpRequest.DONE) {
-                if (request.status === 200) {
-                    //                    console.log("Response = " + request.responseText);
-                    // if response is JSON you can parse it
-                    getTimer.start()
-                }
-                else {
-                    // This is very handy for finding out why your web service won't talk to you
-                    //                    console.log("Status: " + request.status + ", Status Text: " + request.statusText);
-                }
-            }
-        }
-        // Make sure whatever you post is URI encoded
-        //        var encodedString = encodeURIComponent(postString);
-        // This is for a POST request but GET etc. work fine too
-        request.open("POST", "http://"+attrs.ip+":8080/desktop/redo/", true); // only async supported
-        // Post types other than forms should work fine too but I've not tried
-        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        // Form data is web service dependent - check parameter format
-        var requestString = "noteId=" + attrs.noteId;
-        request.send(requestString);
+        var text = attrs.outStack.pop
+        textEdit.text = text
     }
 
     function postToSaveNow() {

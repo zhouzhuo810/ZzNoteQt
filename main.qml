@@ -25,9 +25,10 @@ Window {
         property int count
         property var noteId
         property var ip
+        property bool isMarkdown: false
         property bool isLoadOk
-        property int versionCode: 5
-        property string versionName: "1.0.4"
+        property int versionCode: 6
+        property string versionName: "1.0.5"
         property var inStack: []
         property var outStack: []
     }
@@ -541,12 +542,21 @@ Window {
         var text = textEdit.text
         var start = textEdit.selectionStart
         var end = textEdit.selectionEnd
-        var reg = /\n(\n)*( )*(\n)*\n/g
-        var contentY = flickView.contentY
 
-        var reg1 = new RegExp( '/\t+/' , "g")
-        var reg2 = new RegExp('　', "g")
-        textEdit.text = "　　" + text.replace(reg1, '').replace(reg2, "").replace(reg, '\n').replace(/[\n\r]/g, '\n\n　　')
+        var contentY = flickView.contentY
+        if(attrs.isMarkdown === true) {
+            var reg = /\n(\n)*( )*(\n)*\n/g
+            var reg2 = new RegExp('　', "g")
+            var reg3 = new RegExp(' ', "g")
+            textEdit.text = text.replace(reg2, "").replace(reg3, "").replace(reg, '\n').replace(/[\n\r]/g, '  \n\n')
+        } else {
+            var reg = /\n(\n)*( )*(\n)*\n/g
+            var reg1 = new RegExp( '/\t+/' , "g")
+            var reg2 = new RegExp('　', "g")
+            var reg3 = new RegExp(' ', "g")
+            textEdit.text = "　　" + text.replace(reg1, '').replace(reg2, "").replace(reg3, "").replace(reg, '\n').replace(/[\n\r]/g, '\n\n　　')
+        }
+
         textEdit.select(start, start)
         flickView.contentY = contentY
     }
@@ -725,6 +735,7 @@ Window {
                         attrs.isLoadOk = true
                         showIpInputView(false)
                         attrs.noteId = response.data.noteId
+                        attrs.isMarkdown = response.data.markdown
                         var content = response.data.content
                         textEdit.text = content
                     }
@@ -812,6 +823,9 @@ Window {
                     // then do something with it here
                     var changeNote = attrs.noteId !== noteId
                     attrs.noteId = noteId
+                    if (response.editingMarkdown !== undefined) {
+                        attrs.isMarkdown = response.editingMarkdown
+                    }
                     if (noteId === 0) {
                         textEdit.text = "请打开一篇纯文本便签"
                         attrs.isLoadOk = false

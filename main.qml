@@ -546,15 +546,13 @@ Window {
         var contentY = flickView.contentY
         if(attrs.isMarkdown === true) {
             var reg = /\n(\n)*( )*(\n)*\n/g
-            var reg2 = new RegExp('　', "g")
-            var reg3 = new RegExp(' ', "g")
-            textEdit.text = text.replace(reg2, "").replace(reg3, "").replace(reg, '\n').replace(/[\n\r]/g, '  \n\n')
+            var reg2 = /(  )*\n/g
+            textEdit.text = text.replace(reg, '\n').replace(reg2, '\n').replace(/[\n\r]/g, '  \n\n')
         } else {
             var reg = /\n(\n)*( )*(\n)*\n/g
             var reg1 = new RegExp( '/\t+/' , "g")
             var reg2 = new RegExp('　', "g")
-            var reg3 = new RegExp(' ', "g")
-            textEdit.text = "　　" + text.replace(reg1, '').replace(reg2, "").replace(reg3, "").replace(reg, '\n').replace(/[\n\r]/g, '\n\n　　')
+            textEdit.text = "　　" + text.replace(reg1, '').replace(reg2, "").replace(reg, '\n').replace(/[\n\r]/g, '\n\n　　')
         }
 
         textEdit.select(start, start)

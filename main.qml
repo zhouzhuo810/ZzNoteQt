@@ -27,8 +27,8 @@ Window {
         property var ip
         property bool isMarkdown: false
         property bool isLoadOk
-        property int versionCode: 6
-        property string versionName: "1.0.5"
+        property int versionCode: 7
+        property string versionName: "1.0.6"
         property var inStack: []
         property var outStack: []
     }
@@ -700,7 +700,7 @@ Window {
         // Post types other than forms should work fine too but I've not tried
         request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         // Form data is web service dependent - check parameter format
-        var requestString = "noteId=" + attrs.noteId +"&content="+content;
+        var requestString = "noteId=" + attrs.noteId +"&content="+ encodeURIComponent(content);
         request.send(requestString);
     }
 
